@@ -33,11 +33,11 @@ class App:
     @classmethod
     def run(cls):
         self = cls()
+        self.register_sign()
         self.start()
 
     def start(self):
         Config().run()
-        for sign in [signal.SIGINT, signal.SIGHUP, signal.SIGTERM]: signal.signal(sign, self.handler_exit)
         self.init_class()
 
     @classmethod
@@ -54,6 +54,17 @@ class App:
         if Config.is_cluster_enabled():
             Cluster().run()
 
+    def register_sign(self):
+        is_windows = os.name == 'nt'
+        # if is_windows:
+        signs = [signal.SIGINT, signal.SIGTERM]
+        # else:
+        #     signs = [signal.SIGINT, signal.SIGHUP, signal.SIGTERM] # SIGHUP 会导致终端退出，程序也退出，暂时去掉
+        for sign in signs:
+            signal.signal(sign, self.handler_exit)
+
+        pass
+
     def handler_exit(self, *args, **kwargs):
         """
         程序退出
@@ -69,6 +80,7 @@ class App:
 
     @classmethod
     def check_auto_code(cls):
+        if Config().AUTO_CODE_PLATFORM == 'free': return True
         if not Config().AUTO_CODE_ACCOUNT.get('user') or not Config().AUTO_CODE_ACCOUNT.get('pwd'):
             return False
         return True
@@ -93,6 +105,25 @@ class App:
             Notification.voice_code(Config().NOTIFICATION_VOICE_CODE_PHONE, '张三',
                                     OrderLog.MESSAGE_ORDER_SUCCESS_NOTIFICATION_OF_VOICE_CODE_CONTENT.format('北京',
                                                                                                              '深圳'))
+        if Config().EMAIL_ENABLED:  # 邮件通知
+            CommonLog.add_quick_log(CommonLog.MESSAGE_TEST_SEND_EMAIL).flush()
+            Notification.send_email(Config().EMAIL_RECEIVER, '测试发送邮件', 'By py12306')
+
+        if Config().DINGTALK_ENABLED:  # 钉钉通知
+            CommonLog.add_quick_log(CommonLog.MESSAGE_TEST_SEND_DINGTALK).flush()
+            Notification.dingtalk_webhook('测试发送信息')
+
+        if Config().TELEGRAM_ENABLED:  # Telegram通知
+            CommonLog.add_quick_log(CommonLog.MESSAGE_TEST_SEND_TELEGRAM).flush()
+            Notification.send_to_telegram('测试发送信息')
+
+        if Config().SERVERCHAN_ENABLED:  # ServerChan通知
+            CommonLog.add_quick_log(CommonLog.MESSAGE_TEST_SEND_SERVER_CHAN).flush()
+            Notification.server_chan(Config().SERVERCHAN_KEY, '测试发送消息', 'By py12306')
+
+        if Config().PUSHBEAR_ENABLED:  # PushBear通知
+            CommonLog.add_quick_log(CommonLog.MESSAGE_TEST_SEND_PUSH_BEAR).flush()
+            Notification.push_bear(Config().PUSHBEAR_KEY, '测试发送消息', 'By py12306')
 
     @classmethod
     def run_check(cls):

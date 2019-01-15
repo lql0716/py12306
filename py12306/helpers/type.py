@@ -26,6 +26,7 @@ class OrderSeatType:
         '软卧': 4,
         '硬卧': 3,
         '动卧': 1,
+        '软座': 2,
         '硬座': 1,
         '无座': 1,
     }
@@ -33,6 +34,7 @@ class OrderSeatType:
 
 @singleton
 class SeatType:
+    NO_SEAT = 26
     dicts = {
         '特等座': 25,
         '商务座': 32,
@@ -41,8 +43,7 @@ class SeatType:
         '软卧': 23,
         '硬卧': 28,
         '动卧': 33,
+        '软座': 24,
         '硬座': 29,
-        '无座': 26,
+        '无座': NO_SEAT,
     }
-
-

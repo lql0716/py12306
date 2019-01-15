@@ -22,8 +22,30 @@ class CommonLog(BaseLog):
     MESSAGE_CHECK_EMPTY_USER_ACCOUNT = '请配置 12306 账号密码'
 
     MESSAGE_TEST_SEND_VOICE_CODE = '正在测试发送语音验证码...'
+    MESSAGE_TEST_SEND_EMAIL = '正在测试发送邮件...'
+    MESSAGE_TEST_SEND_DINGTALK = '正在测试发送钉钉消息...'
+    MESSAGE_TEST_SEND_TELEGRAM = '正在测试推送到Telegram...'
+    MESSAGE_TEST_SEND_SERVER_CHAN = '正在测试发送ServerChan消息...'
+    MESSAGE_TEST_SEND_PUSH_BEAR = '正在测试发送PushBear消息...'
 
     MESSAGE_CONFIG_FILE_DID_CHANGED = '配置文件已修改，正在重新加载中\n'
+    MESSAGE_API_RESPONSE_CAN_NOT_BE_HANDLE = '接口返回错误'
+
+    MESSAGE_SEND_EMAIL_SUCCESS = '邮件发送成功，请检查收件箱'
+    MESSAGE_SEND_EMAIL_FAIL = '邮件发送失败，请手动检查配置，错误原因 {}'
+
+    MESSAGE_SEND_TELEGRAM_SUCCESS = 'Telegram推送成功'
+    MESSAGE_SEND_TELEGRAM_FAIL = 'Telegram推送失败，错误原因 {}'
+
+    MESSAGE_SEND_SERVER_CHAN_SUCCESS = '发送成功，请检查微信'
+    MESSAGE_SEND_SERVER_CHAN_FAIL = 'ServerChan发送失败，请检查KEY'
+
+    MESSAGE_SEND_PUSH_BEAR_SUCCESS = '发送成功，请检查微信'
+    MESSAGE_SEND_PUSH_BEAR_FAIL = 'PushBear发送失败，请检查KEY'
+
+    MESSAGE_OUTPUT_TO_FILE_IS_UN_ENABLE = '请先打开配置：输出到文件'
+
+    MESSAGE_GET_RESPONSE_FROM_FREE_AUTO_CODE = '从免费打码获取结果失败'
 
     def __init__(self):
         super().__init__()
@@ -42,6 +64,9 @@ class CommonLog(BaseLog):
         if not Const.IS_TEST and Config().OUT_PUT_LOG_TO_FILE_ENABLED:
             self.add_quick_log()
             self.add_quick_log('日志已输出到文件中: {}'.format(Config().OUT_PUT_LOG_TO_FILE_PATH))
+        if Config().WEB_ENABLE:
+            self.add_quick_log()
+            self.add_quick_log('WEB 管理页面已开启，请访问 主机地址 + 端口 {} 进行查看'.format(Config().WEB_PORT))
 
         self.add_quick_log()
         self.flush(file=False, publish=False)
@@ -57,8 +82,14 @@ class CommonLog(BaseLog):
         self.add_quick_log('多线程查询: {}'.format(get_true_false_text(Config().QUERY_JOB_THREAD_ENABLED, enable, disable)))
         self.add_quick_log(
             '语音验证码: {}'.format(get_true_false_text(Config().NOTIFICATION_BY_VOICE_CODE, enable, disable)))
+        self.add_quick_log('邮件通知: {}'.format(get_true_false_text(Config().EMAIL_ENABLED, enable, disable)))
+        self.add_quick_log('钉钉通知: {}'.format(get_true_false_text(Config().DINGTALK_ENABLED, enable, disable)))
+        self.add_quick_log('Telegram通知: {}'.format(get_true_false_text(Config().TELEGRAM_ENABLED, enable, disable)))
+        self.add_quick_log('ServerChan通知: {}'.format(get_true_false_text(Config().SERVERCHAN_ENABLED, enable, disable)))
+        self.add_quick_log('PushBear通知: {}'.format(get_true_false_text(Config().PUSHBEAR_ENABLED, enable, disable)))
         self.add_quick_log('查询间隔: {} 秒'.format(Config().QUERY_INTERVAL))
         self.add_quick_log('用户心跳检测间隔: {} 秒'.format(Config().USER_HEARTBEAT_INTERVAL))
+        self.add_quick_log('WEB 管理页面: {}'.format(get_true_false_text(Config().WEB_ENABLE, enable, disable)))
         if Config().is_cluster_enabled():
             from py12306.cluster.cluster import Cluster
             self.add_quick_log('分布式查询: {}'.format(get_true_false_text(Config().is_cluster_enabled(), enable, enable)))

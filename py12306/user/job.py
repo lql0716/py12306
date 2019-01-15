@@ -29,6 +29,7 @@ class UserJob:
     user_loaded = False  # 用户是否已加载成功
     passengers = []
     retry_time = 3
+    login_num = 0  # 尝试登录次数
 
     # Init page
     global_repeat_submit_token = None
@@ -69,7 +70,7 @@ class UserJob:
             app_available_check()
             if Config().is_slave():
                 self.load_user_from_remote()
-                pass  # 虽然同一个 cookie，同时请求之后会导致失效，暂时不在子节点中加载用户
+                pass
             else:
                 if Config().is_master() and not self.cookie: self.load_user_from_remote()  # 主节点加载一次 Cookie
                 self.check_heartbeat()
@@ -84,6 +85,7 @@ class UserJob:
         if self.is_first_time() or not self.check_user_is_login():
             self.is_ready = False
             if not self.handle_login(): return
+            self.set_last_heartbeat()
 
         self.is_ready = True
         self.user_did_load()
@@ -92,7 +94,7 @@ class UserJob:
             UserLog.add_quick_log(message).flush()
         else:
             self.cluster.publish_log_message(message)
-        self.set_last_heartbeat()
+        # self.set_last_heartbeat()
 
     def get_last_heartbeat(self):
         if Config().is_cluster_enabled():
@@ -100,10 +102,11 @@ class UserJob:
 
         return self.last_heartbeat
 
-    def set_last_heartbeat(self):
+    def set_last_heartbeat(self, time=None):
+        time = time if time != None else time_int()
         if Config().is_cluster_enabled():
-            return self.cluster.session.set(Cluster.KEY_USER_LAST_HEARTBEAT, time_int())
-        self.last_heartbeat = time_int()
+            return self.cluster.session.set(Cluster.KEY_USER_LAST_HEARTBEAT, time)
+        self.last_heartbeat = time
 
     # def init_cookies
     def is_first_time(self):
@@ -113,7 +116,7 @@ class UserJob:
 
     def handle_login(self):
         UserLog.print_start_login(user=self)
-        self.login()
+        return self.login()
 
     def login(self):
         """
@@ -157,6 +160,7 @@ class UserJob:
         is_login = response.json().get('data.flag', False)
         if is_login:
             self.save_user()
+            self.set_last_heartbeat()
             # self.get_user_info()  # 检测应该是不会维持状态，这里再请求下个人中心看有没有用，01-10 看来应该是没用
 
         return is_login
@@ -182,6 +186,7 @@ class UserJob:
         用户登录成功
         :return:
         """
+        self.login_num += 1
         self.welcome_user()
         self.save_user()
         self.get_user_info()
@@ -198,11 +203,12 @@ class UserJob:
         self.info = {**self.info, **info}
 
     def get_name(self):
-        return self.info.get('user_name')
+        return self.info.get('user_name', '')
 
     def save_user(self):
-        if Config().is_cluster_enabled():
-            return self.cluster.set_user_cookie(self.key, self.session.cookies)
+        if Config().is_master():
+            self.cluster.set_user_cookie(self.key, self.session.cookies)
+            self.cluster.set_user_info(self.key, self.info)
         with open(self.get_cookie_path(), 'wb') as f:
             pickle.dump(self.session.cookies, f)
 
@@ -219,6 +225,7 @@ class UserJob:
             self.user_did_load()
         else:
             UserLog.add_quick_log(UserLog.MESSAGE_LOADED_USER_BUT_EXPIRED).flush()
+            self.set_last_heartbeat(0)
 
     def user_did_load(self):
         """
@@ -255,16 +262,21 @@ class UserJob:
 
     def load_user_from_remote(self):
         cookie = self.cluster.get_user_cookie(self.key)
-        if not cookie and Config().is_slave():
+        info = self.cluster.get_user_info(self.key)
+        if Config().is_slave() and (not cookie or not info):
             while True:  # 子节点只能取
                 UserLog.add_quick_log(UserLog.MESSAGE_USER_COOKIE_NOT_FOUND_FROM_REMOTE.format(self.user_name)).flush()
                 stay_second(self.retry_time)
                 return self.load_user_from_remote()
+        if info: self.info = info
         if cookie:
             self.session.cookies.update(cookie)
             if not self.cookie:  # 第一次加载
                 self.cookie = True
-                self.did_loaded_user()
+                if not Config().is_slave():
+                    self.did_loaded_user()
+                else:
+                    UserLog.print_welcome_user(self)
             return True
         return False
 
@@ -322,8 +334,8 @@ class UserJob:
                 passenger = array_dict_find_by_key_value(self.passengers, 'passenger_name', member)
                 if not passenger:
                     UserLog.add_quick_log(
-                        UserLog.MESSAGE_USER_PASSENGERS_IS_INVALID.format(self.user_name, member)).flush(
-                        exit=True)  # TODO 需要优化
+                        UserLog.MESSAGE_USER_PASSENGERS_IS_INVALID.format(self.user_name, member)).flush()
+                    return False
                 new_member = {
                     'name': passenger.get('passenger_name'),
                     'id_card': passenger.get('passenger_id_no'),

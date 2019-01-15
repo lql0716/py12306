@@ -15,8 +15,9 @@
 - [x] 分布式运行
 - [x] Docker 支持
 - [x] 动态修改配置文件
-- [ ] 邮件通知
-- [ ] Web 管理页面
+- [x] 邮件通知
+- [x] Web 管理页面
+- [x] 微信消息通知
 
 ## 使用
 py12306 需要运行在 python 3.6 以上版本（其它版本暂未测试)
@@ -34,7 +35,9 @@ cp env.py.example env.py
 ```
 自动打码
 
-打码依赖于若快平台，需要先到 [http://www.ruokuai.com](http://www.ruokuai.com/login) 注册一个账号后填写到配置中
+目前支持免费打码，和若快打码
+
+注：免费打码无法保证持续可用，如失效请手动切换到若快平台，需要先到 [http://www.ruokuai.com](http://www.ruokuai.com/login) 注册一个账号后填写到配置中
 
 语音通知
 
@@ -49,7 +52,7 @@ cp env.py.example env.py
 python main.py -t
 ```
 
-测试语音通知 -t -n
+测试通知消息 (语音, 邮件) -t -n
 ```bash
 # 默认不会进行通知测试，要对通知进行测试需要加上 -n 参数 
 python main.py -t -n
@@ -97,14 +100,35 @@ docker run -d -v $(pwd):/config -v py12306:/data pjialin/py12306
 ```
 当前目录会多一个 12306.log 的日志文件， `tail -f 12306.log`
 
-## 更新
-### 19-01-10
-* 支持分布式集群
-### 19-01-11
-* 配置文件支持动态修改
+## Web 管理页面
 
-## 下单成功截图
-![下单成功图片](./data/images/order_success.png)
+目前支持用户和任务以及实时日志查看，更多功能后续会不断加入
+
+**使用**
+
+打开 Web 功能需要将配置中的 `WEB_ENABLE` 打开，启动程序后访问当前主机地址 + 端口号 (默认 8008) 即可，如 http://127.0.0.1:8008
+
+## 更新
+- 19-01-10
+    - 支持分布式集群
+- 19-01-11
+    - 配置文件支持动态修改
+- 19-01-12
+    - 新增免费打码
+- 19-01-14
+    - 新增 Web 页面支持
+- 19-01-15
+    - 新增 钉钉通知
+    - 新增 Telegram 通知
+    - 新增 ServerChan 和 PushBear 微信推送
+
+
+## 截图
+### Web 管理页面
+![Web 管理页面图片](https://github.com/pjialin/py12306/blob/master/data/images/web.png)
+
+### 下单成功
+![下单成功图片](https://github.com/pjialin/py12306/blob/master/data/images/order_success.png)
 
 ### 关于防封
 目前查询和登录操作是分开的，查询是不依赖用户是否登录，放在 A 云 T 云容易被限制 ip，建议在其它网络环境下运行
@@ -112,8 +136,10 @@ docker run -d -v $(pwd):/config -v py12306:/data pjialin/py12306
 交流群 [274781597](http://shang.qq.com/wpa/qunwpa?idkey=8eab0b6402096266a62263c1cd452149926adb5cba7a2b7a98a5adc65869addf)
 
 ## Thanks
-感谢大佬 [testerSunshine](https://github.com/testerSunshine/12306)，借鉴了部分实现
+- 感谢大佬 [testerSunshine](https://github.com/testerSunshine/12306)，借鉴了部分实现
+- 感谢所有提供 pr 的大佬 
 
 ## License
 
 [Apache License.](https://github.com/pjialin/py12306/blob/master/LICENSE)
+

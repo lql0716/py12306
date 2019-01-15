@@ -20,6 +20,7 @@ class Config:
     # 多线程查询
     QUERY_JOB_THREAD_ENABLED = 0
     # 打码平台账号
+    AUTO_CODE_PLATFORM = ''
     AUTO_CODE_ACCOUNT = {'user': '', 'pwd': ''}
     # 输出日志到文件
     OUT_PUT_LOG_TO_FILE_ENABLED = 0
@@ -53,11 +54,38 @@ class Config:
     REDIS_PORT = '6379'
     REDIS_PASSWORD = ''
 
+    # 钉钉配置
+    DINGTALK_ENABLED = 0
+    DINGTALK_WEBHOOK = ''
+
+    # Telegram推送配置
+    TELEGRAM_ENABLED = 0
+    TELEGRAM_BOT_API_URL = ''
+
+    # ServerChan和PushBear配置
+    SERVERCHAN_ENABLED = 0
+    SERVERCHAN_KEY = '8474-ca071ADSFADSF'
+    PUSHBEAR_ENABLED = 0
+    PUSHBEAR_KEY = 'SCUdafadsfasfdafdf45234234234'
+
+    # 邮箱配置
+    EMAIL_ENABLED = 0
+    EMAIL_SENDER = ''
+    EMAIL_RECEIVER = ''
+    EMAIL_SERVER_HOST = ''
+    EMAIL_SERVER_USER = ''
+    EMAIL_SERVER_PASSWORD = ''
+
+    WEB_ENABLE = 0
+    WEB_USER = {}
+    WEB_PORT = 8080
+    WEB_ENTER_HTML_PATH = PROJECT_DIR + 'py12306/web/static/index.html'
+
     envs = []
     retry_time = 5
     last_modify_time = 0
 
-    disallow_update_cofigs = [
+    disallow_update_configs = [
         'CLUSTER_ENABLED',
         'NODE_IS_MASTER',
         'NODE_NAME',
@@ -136,7 +164,7 @@ class Config:
         from py12306.query.query import Query
         from py12306.user.user import User
         for key, value in envs:
-            if key in self.disallow_update_cofigs: continue
+            if key in self.disallow_update_configs: continue
             if value != -1:
                 old = getattr(self, key)
                 setattr(self, key, value)

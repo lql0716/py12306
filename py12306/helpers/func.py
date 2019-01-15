@@ -100,6 +100,15 @@ def get_file_modify_time(filePath):
     return timestamp_to_time(timestamp)
 
 
+def get_file_total_line_num(file, encoding='utf-8'):
+    with open(file, 'r', encoding=encoding) as f:
+        return len(f.readlines())
+
+
+def pick_file_lines(file, lines):
+    return [x for i, x in enumerate(file) if i in lines]
+
+
 def str_to_time(str):
     return datetime.datetime.strptime(str, '%Y-%m-%d %H:%M:%S.%f')
 
